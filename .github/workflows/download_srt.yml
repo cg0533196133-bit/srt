@@ -1,41 +1,28 @@
-name: Download Platform Video and Zip
+name: Download Subtitle and Zip
 
 on:
   workflow_dispatch:
-    inputs:
-      video_url:
-        description: 'הכנס את הקישור לסרטון'
-        required: true
-        type: string
 
 jobs:
-  download-with-ytdlp:
+  download-and-zip:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+      - name: Create working directory
+        run: mkdir -p downloads
 
-      - name: Install yt-dlp and dependencies
+      - name: Download SRT file
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          pip install --upgrade yt-dlp
-
-      - name: Download Video using yt-dlp
-        run: |
-          mkdir -p downloads
-          yt-dlp -o "downloads/video.%(ext)s" "${{ inputs.video_url }}"
+          # הורדת קובץ הכתוביות הישיר תוך הימנעות מחסימות בסיסיות
+          curl -L -A "Mozilla/5.0" "https://www.subtitlecat.com/subs/677/Oppenheimer.2023.1080p.BluRay.x264.AAC5.1-YTS.MX.EN-iw.srt" -o downloads/subtitles.srt
 
       - name: Create ZIP archive
         run: |
           cd downloads
-          zip -r video.zip *
+          zip -r subtitles.zip subtitles.srt
 
       - name: Upload ZIP as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: video-archive
-          path: downloads/video.zip
+          name: subtitles-zip
+          path: downloads/subtitles.zip
