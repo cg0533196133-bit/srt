@@ -1,0 +1,32 @@
+name: Download Direct Video and Zip
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'הכנס את הקישור הישיר לסרטון'
+        required: true
+        type: string
+
+jobs:
+  download-video:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create working directory
+        run: mkdir -p downloads
+
+      - name: Download actual video file (following redirects)
+        run: |
+          curl -L -sSL "${{ inputs.video_url }}" -o downloads/video.mp4
+
+      - name: Create ZIP archive
+        run: |
+          cd downloads
+          zip -r video.zip video.mp4
+
+      - name: Upload ZIP as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-archive
+          path: downloads/video.zip
