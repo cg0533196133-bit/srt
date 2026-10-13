@@ -14,7 +14,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22' # עדכון לגרסה 22 הנתמכת
 
       - name: Install dependencies and Playwright
         run: |
@@ -27,9 +27,8 @@ jobs:
 
       - name: Run Playwright script to download file
         run: |
-          node - e '
+          node -e '
           const { chromium } = require("playwright");
-          const fs = require("fs");
           const path = require("path");
 
           (async () => {
