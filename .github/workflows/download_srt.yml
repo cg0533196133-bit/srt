@@ -1,4 +1,4 @@
-name: Download Subtitle and Zip
+name: Download Subtitle via Playwright and Zip
 
 on:
   workflow_dispatch:
@@ -8,13 +8,51 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies and Playwright
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install --with-deps chromium
+
       - name: Create working directory
         run: mkdir -p downloads
 
-      - name: Download SRT file
+      - name: Run Playwright script to download file
         run: |
-          # הורדת קובץ הכתוביות הישיר תוך הימנעות מחסימות בסיסיות
-          curl -L -A "Mozilla/5.0" "https://www.subtitlecat.com/subs/677/Oppenheimer.2023.1080p.BluRay.x264.AAC5.1-YTS.MX.EN-iw.srt" -o downloads/subtitles.srt
+          node - e '
+          const { chromium } = require("playwright");
+          const fs = require("fs");
+          const path = require("path");
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+            
+            // גלישה לעמוד הנדרש
+            await page.goto("https://www.subtitlecat.com/subs/677/Oppenheimer.2023.1080p.BluRay.x264.AAC5.1-YTS.MX.EN-iw.srt", { waitUntil: "networkidle" });
+
+            // הגדרת האזנה לאירוע הורדה
+            const [ download ] = await Promise.all([
+              page.waitForEvent("download"),
+              // איתור כפתור ההורדה לפי טקסט או מזהה ולחיצה עליו
+              page.click("a#download_translated, a[href*=\".srt\"], a:has-text(\"Download\")")
+            ]);
+
+            // שמירת הקובץ בתיקיית היעד
+            const downloadPath = path.join(process.cwd(), "downloads", "subtitles.srt");
+            await download.saveAs(downloadPath);
+
+            await browser.close();
+          })();
+          '
 
       - name: Create ZIP archive
         run: |
