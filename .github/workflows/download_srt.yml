@@ -1,29 +1,38 @@
-name: Download Direct Video and Zip
+name: Download Platform Video and Zip
 
 on:
   workflow_dispatch:
     inputs:
       video_url:
-        description: 'הכנס את הקישור הישיר לסרטון'
+        description: 'הכנס את הקישור לסרטון'
         required: true
         type: string
 
 jobs:
-  download-video:
+  download-with-ytdlp:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create working directory
-        run: mkdir -p downloads
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-      - name: Download actual video file (following redirects)
+      - name: Install yt-dlp and dependencies
         run: |
-          curl -L -sSL "${{ inputs.video_url }}" -o downloads/video.mp4
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          pip install --upgrade yt-dlp
+
+      - name: Download Video using yt-dlp
+        run: |
+          mkdir -p downloads
+          yt-dlp -o "downloads/video.%(ext)s" "${{ inputs.video_url }}"
 
       - name: Create ZIP archive
         run: |
           cd downloads
-          zip -r video.zip video.mp4
+          zip -r video.zip *
 
       - name: Upload ZIP as Artifact
         uses: actions/upload-artifact@v4
